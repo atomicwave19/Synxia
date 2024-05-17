@@ -1,15 +1,12 @@
-// Import required packages
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const { open } = require('sqlite');
 const path = require('path');
 
-// Initialize the Express application
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Database setup
 (async () => {
   const db = await open({
     filename: './novel.db',
@@ -53,7 +50,6 @@ app.use(express.static(path.join(__dirname, 'public')));
   });
 })();
 
-// Serve the frontend
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
