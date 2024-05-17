@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Novel</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+
+<div id="app" class="container mx-auto p-4">
+  <h1 class="text-3xl font-bold mb-4">My Novel</h1>
+  <div v-if="!selectedChapter">
+    <ul>
+      <li v-for="chapter in chapters" :key="chapter.id" @click="selectChapter(chapter.id)" class="cursor-pointer text-blue-500">
+        {{ chapter.title }}
+      </li>
+    </ul>
+    <button @click="showCreateForm" class="bg-blue-500 text-white px-4 py-2 mt-4">Create New Chapter</button>
+  </div>
+  
+  <div v-if="selectedChapter">
+    <h2 class="text-2xl font-bold mb-2">{{ selectedChapter.title }}</h2>
+    <p>{{ selectedChapter.content }}</p>
+    <button @click="editChapter" class="bg-yellow-500 text-white px-4 py-2 mt-4">Edit Chapter</button>
+    <button @click="deleteChapter" class="bg-red-500 text-white px-4 py-2 mt-4">Delete Chapter</button>
+    <button @click="deselectChapter" class="bg-gray-500 text-white px-4 py-2 mt-4">Back to List</button>
+  </div>
+
+  <div v-if="creatingChapter">
+    <h2 class="text-2xl font-bold mb-2">Create New Chapter</h2>
+    <input v-model="newChapter.title" placeholder="Title" class="border p-2 mb-2 w-full">
+    <textarea v-model="newChapter.content" placeholder="Content" class="border p-2 mb-2 w-full"></textarea>
+    <button @click="createChapter" class="bg-green-500 text-white px-4 py-2 mt-4">Create</button>
+    <button @click="cancelCreate" class="bg-gray-500 text-white px-4 py-2 mt-4">Cancel</button>
+  </div>
+
+  <div v-if="editingChapter">
+    <h2 class="text-2xl font-bold mb-2">Edit Chapter</h2>
+    <input v-model="selectedChapter.title" placeholder="Title" class="border p-2 mb-2 w-full">
+    <textarea v-model="selectedChapter.content" placeholder="Content" class="border p-2 mb-2 w-full"></textarea>
+    <button @click="updateChapter" class="bg-green-500 text-white px-4 py-2 mt-4">Update</button>
+    <button @click="cancelEdit" class="bg-gray-500 text-white px-4 py-2 mt-4">Cancel</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.12"></script>
+<script>
+  new Vue({
+    el: '#app',
+    data: {
+      chapters: [],
+      selectedChapter: null,
+      creatingChapter: false,
+      editingChapter: false,
+      newChapter: {
+        title: '',
+        content: ''
+      }
+    },
+    created() {
+      this.fetchChapters();
+    },
+    methods: {
+      async fetchChapters() {
+        const response = await fetch('/api/chapters');
+        this.chapters = await response.json();
+      },
+      async selectChapter(id) {
+        const response = await fetch(`/api/chapters/${id}`);
+        this.selectedChapter = await response.json();
+      },
+      deselectChapter() {
+        this.selectedChapter = null;
+      },
+      showCreateForm() {
+        this.creatingChapter = true;
+      },
+      async createChapter() {
+        await fetch('/api/chapters', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(this.newChapter)
+        });
+        this.creatingChapter = false;
+        this.newChapter.title = '';
+        this.newChapter.content = '';
+        this.fetchChapters();
+      },
+      cancelCreate() {
+        this.creatingChapter = false;
+      },
+      editChapter() {
+        this.editingChapter = true;
+      },
+      async updateChapter() {
+        await fetch(`/api/chapters/${this.selectedChapter.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(this.selectedChapter)
+        });
+        this.editingChapter = false;
+        this.fetchChapters();
+      },
+      cancelEdit() {
+        this.editingChapter = false;
+      },
+      async deleteChapter() {
+        await fetch(`/api/chapters/${this.selectedChapter.id}`, {
+          method: 'DELETE'
+        });
+        this.selectedChapter = null;
+        this.fetchChapters();
+      }
+    }
+  });
+</script>
+</body>
+</html>
